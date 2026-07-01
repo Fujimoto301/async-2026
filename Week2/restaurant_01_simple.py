@@ -18,12 +18,11 @@ def do_cooking(customer):
     sleep(1)
     print(f"{ctime()} Cooking for Customer-{customer} ...Done!")
 
-# Mini Bar
+# Do Cooking
 def mini_bar(customer):
     print(f"{ctime()} Mini Bar for Customer-{customer} ...")
     sleep(1)
     print(f"{ctime()} Mini Bar for Customer-{customer} ...Done!")
-
 
 if __name__ == "__main__":
     # Begin of main thread
@@ -38,4 +37,4 @@ if __name__ == "__main__":
         mini_bar(customer)
 
     duration = time() - start_time
-    print(f"{ctime()} Finished Cooking in {duration:.2f} seconds.")
+    print(f"{ctime()} Finished Cooking in {duration:0.2f} seconds.")
