@@ -1,51 +1,45 @@
-# Assignment 1: The Smart Courier System (ระบบส่งพัสดุด่วน)
-# Delivery System: นักศึกษาต้องเขียน try...except CancelledError ได้ถูกต้อง 
-# และใช้ .get_name(), .cancel(), และ .cancelled() ได้
+# โน้ตกันลืม Assignment 1: การใช้ Task ควบคุมเวลาทำงานและยกเลิกด้วย CancelledError
 import asyncio
 from time import ctime
 
-async def delivery_task(package_id: str, duration: float):
-    """
-    Coroutine จำลองการส่งของด้วย asyncio.sleep(duration)
-    พิมพ์ข้อความเมื่อเริ่มส่ง และเมื่อส่งเสร็จสิ้น return ข้อความ Delivered
-    """
-    print(f"{ctime()} Courier started delivering {package_id}...")
+async def delivery_task(package_id, duration):
     try:
+        # พิมพ์แจ้งเริ่มวิ่งส่งของ
+        print(f"{ctime()} Courier started delivering {package_id}...")
+        
+        # หลับจำลองเวลาเดินทาง
         await asyncio.sleep(duration)
-        print(f"{ctime()} Package {package_id} Delivered!")
+        
         return f"Package {package_id} Delivered!"
+        
     except asyncio.CancelledError:
-        # ดักจับ CancelledError เมื่อ task ถูกยกเลิก
+        # ดักจับตอนโดน cancel ปลายทางสั่งให้ส่งของคืนคลัง (พิมพ์ข้อความตามสเปกอาจารย์เป๊ะๆ)
         print(f"{ctime()} Delivery Canceled! Returning package to warehouse.")
-        raise  # ต้อง raise ต่อเพื่อให้ task เข้าสู่สถานะ cancelled จริง
+        # สำคัญมาก: ต้อง raise ขว้างข้อผิดพลาดไปต่อ ไม่งั้นสถานะ .cancelled() ของ Task ด้านนอกจะไม่เปลี่ยนเป็น True
+        raise
 
 async def main():
-    # 1. สร้าง Task จาก delivery_task โดยส่งค่า package_id="P001" และ duration=5.0
-    #    และตั้งชื่อ Task นี้ว่า "Express-Courier"
-    task = asyncio.create_task(
-        delivery_task(package_id="P001", duration=5.0),
-        name="Express-Courier"
-    )
+    # แตก Task ย่อยส่งของและตั้งชื่อป้ายกำกับไว้ตรวจสอบในลูป
+    task = asyncio.create_task(delivery_task("P001", 5.0), name="Express-Courier")
     
-    # 2. จำลองว่าระหว่างที่พัสดุกำลังเดินทาง (ผ่านไป 2 วินาที)
-    #    ให้ทำการตรวจสอบด้วยคำสั่งฝั่งแฝง ว่า Task นี้เสร็จหรือยัง (.done())
-    #    และสั่งพิมพ์ชื่อของ Task ปัจจุบันออกมาดูบนหน้าจอ
-    await asyncio.sleep(2)
+    # ปล่อยให้รถวิ่งไปก่อน 2 วินาทีแรก
+    await asyncio.sleep(2.0)
+    
+    # เช็กว่าส่งเสร็จหรือยังผ่านสถานะ .done()
     print(f"{ctime()} Checking task '{task.get_name()}'. Is it done? {task.done()}")
     
-    # 3. หากพบว่าส่งของนานเกินไป (ผ่านไป 2 วินาทีแล้วยังไม่เสร็จ)
-    #    ให้โปรแกรมหลักทำการยกเลิกงานนั้นทันทีด้วย .cancel()
+    # ถ้าครบกำหนด 2 วินาทีแล้วยังไม่เสร็จ (เนื่องจาก duration ตั้งไว้ 5) ให้สั่งดึงรถกลับคลังทันที
     if not task.done():
         print(f"{ctime()} Taking too long! Canceling the task...")
         task.cancel()
-    
-    # 4. รอให้ task จบการทำงาน (ไม่ว่าจะสำเร็จหรือถูก cancel)
+        
+    # รอให้ลูปประมวลผลการยกเลิกภายในตัวแปรเสร็จสิ้น
     try:
         await task
     except asyncio.CancelledError:
         pass
-    
-    # 5. ตรวจสอบสถานะตัวแปรภายนอกว่า .cancelled() เป็น True หรือไม่
+        
+    # ยืนยันสถานะสุดท้ายว่ายกเลิกสำเร็จชัวร์ๆ (cancelled() ต้องแสดงค่าเป็น True)
     print(f"{ctime()} Final verify: Is task officially canceled? {task.cancelled()}")
 
 if __name__ == "__main__":
